@@ -17,3 +17,4 @@ terraform_config_metadata.json
 
 # Goreleaser build dir
 dist/
+tfm.exe
