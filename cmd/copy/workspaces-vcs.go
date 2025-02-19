@@ -70,12 +70,12 @@ func createVCSConfiguration(c tfclient.ClientContexts, vcsConfig map[string]stri
 
 					// If the source Workspace assigned VCS does not match the one provided by the user on the left side of the `vcs-map`, do nothing and inform the user
 					if ws.VCSRepo.OAuthTokenID != srcvcs {
-						o.AddFormattedMessageUserProvided2("Workspace %v configured VCS ID does not match provided source ID %v. Skipping.", ws.Name, srcvcs)
+						o.AddFormattedMessageUserProvided2("Workspace %v configured VCS ID does not match provided source ID %v. Skipping.(OAuth App)", ws.Name, srcvcs)
 
 						// If the source Workspace assigned VCS matches the one provided by the user on the left side of the `vcs-map`, update the destination Workspace
 						// with the VCS provided by the user on the right side of the `vcs-map`
 					} else {
-						o.AddFormattedMessageUserProvided2("Updating destination Workspace %v VCS Settings %v", destWorkSpaceName, destvcs)
+						o.AddFormattedMessageUserProvided2("Updating destination Workspace %v VCS Settings %v (OAuth App)", destWorkSpaceName, destvcs)
 
 						vcsConfig := tfe.VCSRepoOptions{
 							Branch:            &ws.VCSRepo.Branch,
@@ -93,12 +93,12 @@ func createVCSConfiguration(c tfclient.ClientContexts, vcsConfig map[string]stri
 
 					// If the source Workspace assigned VCS does not match the one provided by the user on the left side of the `vcs-map`, do nothing and inform the user
 					if ws.VCSRepo.GHAInstallationID != srcvcs {
-						o.AddFormattedMessageUserProvided2("Workspace %v configured VCS ID does not match provided source ID %v. Skipping.", ws.Name, srcvcs)
+						o.AddFormattedMessageUserProvided2("Workspace %v configured VCS ID does not match provided source ID %v. Skipping.(Github App)", ws.Name, srcvcs)
 
 						// If the source Workspace assigned VCS matches the one provided by the user on the left side of the `vcs-map`, update the destination Workspace
 						// with the VCS provided by the user on the right side of the `vcs-map`
 					} else {
-						o.AddFormattedMessageUserProvided2("Updating destination Workspace %v VCS Settings %v", destWorkSpaceName, destvcs)
+						o.AddFormattedMessageUserProvided2("Updating destination Workspace %v VCS Settings %v (Github App)", destWorkSpaceName, destvcs)
 
 						vcsConfig := tfe.VCSRepoOptions{
 							Branch:            &ws.VCSRepo.Branch,

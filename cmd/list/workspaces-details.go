@@ -1,6 +1,14 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+// I leave this as is for now because the best place to get details is from DB!
+// I did learn how to read API document (pkg.go.dev/github.com/hashicorp/go-tfe#Workspace)
+// I did learn if the type is defined as 'relation' (such as CurrentRun is defined as a jsonapi:"relation" to Workspace Object),
+// then only minimum data (i.e. ID) is available, for details I needed to call API (line 108)
+
+// comparing to list workspaces, workspaces-details was to retrieve more detailed data than already provided
+// I have optimized the code to be more concise and explored how add new fields (CurrentRun) to the output
+
 package list
 
 import (
@@ -50,7 +58,7 @@ func listWorkspacesDetails(c tfclient.ClientContexts) error {
 			PageSize:   100},
 	}
 
-	// Processing Source side
+	// Set context
 	if (ListCmd.Flags().Lookup("side").Value.String() == "source") || (!ListCmd.Flags().Lookup("side").Changed) {
 		client = c.SourceClient
 		cntxt = c.SourceContext
@@ -84,19 +92,79 @@ func listWorkspacesDetails(c tfclient.ClientContexts) error {
 	}
 
 	// Output the list of workspaces with details
-	o.AddTableHeaders("Name", "Description", "ExecutionMode", "VCS Repo", "Auto Apply", "Created At",
-		"Locked", "TF Version", "Current Run")
+	o.AddTableHeaders("Name", "Description",
+		"ExecutionMode", "VCS Repo", "Auto Apply", "Created At",
+		"Locked", "TF Version", "Run Status", "Run Created At")
 
-	for _, i := range workspacesList {
+	for i, ws := range workspacesList {
 		ws_repo := "none"
+		run_status := "none"
+		run_createdAt := ""
+		var_details := "none"
+		var run *tfe.Run
+		var err error
 
-		if i.VCSRepo != nil {
-			ws_repo = i.VCSRepo.DisplayIdentifier
+		if ws.VCSRepo != nil {
+			ws_repo = ws.VCSRepo.DisplayIdentifier
 		}
 
-		o.AddTableRows(i.Name, i.Description, i.ExecutionMode, ws_repo, i.AutoApply, i.CreatedAt,
-			i.Locked, i.TerraformVersion, i.CurrentRun.Status)
+		if ws.CurrentRun != nil {
+			run, err = client.Runs.Read(cntxt, ws.CurrentRun.ID)
+			if err != nil {
+				return err
+			}
+			run_status = string(run.Status)
+			run_createdAt = run.CreatedAt.Format("2006-01-02 15:01:04")
+		}
+
+		v, err := getWorkspaceVars(client, cntxt, ws.ID)
+		if err != nil {
+			return err
+		}
+		var_details = v
+
+		o.AddTableRows(ws.Name, ws_repo,
+			//ws.Description, ws.ExecutionMode, ws.AutoApply, ws.CreatedAt,
+			//ws.Locked, ws.TerraformVersion,
+			run_status, run_createdAt, var_details)
+
+		if i == 10 {
+			break
+		}
 	}
 
 	return nil
+}
+
+// return a string contains list of varaibles and mark sensible vars
+func getWorkspaceVars(client *tfe.Client, ctx context.Context, workspaceID string) (string, error) {
+	// will NOT implement loop throught pages because
+	// not expecing more than 100 variables in any workspace
+	opts := tfe.VariableListOptions{
+		ListOptions: tfe.ListOptions{
+			PageNumber: 1,
+			PageSize:   100},
+	}
+
+	var_details := ""
+
+	var_list, err := client.Variables.List(ctx, workspaceID, &opts)
+	if err != nil {
+		return "", err
+	}
+
+	for i, v := range var_list.Items {
+		s := ""
+		if v.Sensitive {
+			s = "(s)"
+		}
+
+		if i == 0 {
+			var_details = v.Key + s
+		} else {
+			var_details = var_details + "," + v.Key + s
+		}
+	}
+
+	return var_details, err
 }
