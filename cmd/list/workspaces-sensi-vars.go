@@ -92,7 +92,7 @@ func listWorkspacesSensiVars(c tfclient.ClientContexts) error {
 	}
 
 	// Output the list of workspaces with details
-	o.AddTableHeaders("Seq", "Name", "Description", "VarSeq", "Var Name", "Sensitive")
+	o.AddTableHeaders("Seq", "Workspace", "VarSeq", "Var", "Sensitive")
 
 	for i, ws := range workspacesList {
 		var_list, err := getWorkspaceSensiVars(client, cntxt, ws.ID)
@@ -108,7 +108,7 @@ func listWorkspacesSensiVars(c tfclient.ClientContexts) error {
 				if v.Sensitive {
 					s = "(s)"
 				}
-				o.AddTableRows(i, ws.Name, seq+1, v.Key, s)
+				o.AddTableRows(i+1, ws.Name, seq+1, v.Key, s)
 			}
 		}
 	}

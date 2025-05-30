@@ -22,6 +22,8 @@ func variableCopy(c tfclient.ClientContexts, sourceWorkspaceID string, destinati
 		},
 	}
 
+	varWithSensitiveFlag := ""
+
 	//Get all variables in source the workspace
 	srcWsVars, err := c.SourceClient.Variables.List(c.SourceContext, sourceWorkspaceID, &variableListOpts)
 	if err != nil {
@@ -51,29 +53,34 @@ func variableCopy(c tfclient.ClientContexts, sourceWorkspaceID string, destinati
 			Sensitive:   &workspaceVar.Sensitive,
 		}
 
+		varWithSensitiveFlag = destVarName
+		if workspaceVar.Sensitive {
+			varWithSensitiveFlag = destVarName + " (sensitive)"
+		}
+
 		// Check for the existence of the variable with the same Key name in the destination
 		exists := doesVarExist(destVarName, destWsVars)
 
 		// If the variable exists in the destination, do nothing and inform the user
 		if exists {
-			o.AddMessageUserProvided("Exists in destination will not migrate", destVarName)
+			o.AddMessageUserProvided("Exists in destination will not migrate", varWithSensitiveFlag)
 
 		} else if skipSensitive {
 			//Create the variable in the destination workspace but skip any sensitive ones
 			if workspaceVar.Sensitive {
-				o.AddMessageUserProvided(destVarName, "is sensitive and will not be copied")
+				o.AddMessageUserProvided(varWithSensitiveFlag, "is sensitive and will not be copied")
+			} else {
+				//Create the variable in the destination workspace
+				o.AddMessageUserProvided("Copying", varWithSensitiveFlag)
+				_, err := c.DestinationClient.Variables.Create(c.DestinationContext, destinationWorkspaceID, variableOpts)
+				if err != nil {
+					fmt.Println("Could not create Workspace variable.\n\n Error:", err.Error())
+					return err
+				}
+			}
 		} else {
 			//Create the variable in the destination workspace
-			o.AddMessageUserProvided("Copying", destVarName)
-			_, err := c.DestinationClient.Variables.Create(c.DestinationContext, destinationWorkspaceID, variableOpts)
-			if err != nil {
-				fmt.Println("Could not create Workspace variable.\n\n Error:", err.Error())
-				return err
-			}
-		} 
-	} else {
-			//Create the variable in the destination workspace
-			o.AddMessageUserProvided("Copying", destVarName)
+			o.AddMessageUserProvided("Copying", varWithSensitiveFlag)
 			_, err := c.DestinationClient.Variables.Create(c.DestinationContext, destinationWorkspaceID, variableOpts)
 			if err != nil {
 				fmt.Println("Could not create Workspace variable.\n\n Error:", err.Error())
