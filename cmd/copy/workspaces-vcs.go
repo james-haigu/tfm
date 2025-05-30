@@ -5,11 +5,13 @@ package copy
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hashicorp-services/tfm/cmd/helper"
 	"github.com/hashicorp-services/tfm/tfclient"
 	tfe "github.com/hashicorp/go-tfe"
+	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
 )
 
@@ -25,7 +27,8 @@ func configureVCSsettings(c tfclient.ClientContexts, org string, vcsOptions tfe.
 
 	workspace, err := c.DestinationClient.Workspaces.Update(c.DestinationContext, c.DestinationOrganizationName, ws, workspaceOptions)
 	if err != nil {
-		return nil, err
+		log.Fatal(aurora.Red(err))
+		//return nil, err
 	}
 
 	return workspace, nil
@@ -38,6 +41,9 @@ func createVCSConfiguration(c tfclient.ClientContexts, vcsConfig map[string]stri
 	for key, element := range vcsConfig {
 		srcvcs := key
 		destvcs := element
+
+		fmt.Println("srcvcs:", srcvcs)
+		fmt.Println("destvcs:", destvcs)
 
 		// Get the source workspaces properties
 		srcWorkspaces, err := getSrcWorkspacesCfg(c)

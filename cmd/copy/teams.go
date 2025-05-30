@@ -108,7 +108,7 @@ func getSrcTeamsFilter(c tfclient.ClientContexts, tmList []string) ([]*tfe.Team,
 			if item_len >= 1 {
 				indexMatch = 0
 				for _, result := range items.Items {
-					fmt.Printf("Try to match team name (%s) with %s\n", tm, result.Name)
+					//fmt.Printf("Try to match team name (%s) with %s\n", tm, result.Name)
 					if tm == result.Name {
 						// Found matching team name
 						srcTeams = append(srcTeams, items.Items[indexMatch])
